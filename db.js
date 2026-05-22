@@ -28,7 +28,13 @@ function dbOnAuthChange(callback) {
 // ─── Profile ──────────────────────────────────────────────────────────────────
 async function dbUpdateProfile(name, color) {
   const { data: { user } } = await _sb.auth.getUser();
-  const { error } = await _sb.from('profiles').update({ name, color }).eq('id', user.id);
+  // upsert handles both: update existing profile OR create if missing
+  const { error } = await _sb.from('profiles').upsert({
+    id: user.id,
+    name,
+    color,
+    email: user.email,
+  }, { onConflict: 'id' });
   if (error) throw error;
 }
 
