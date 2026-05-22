@@ -1,0 +1,10 @@
+# Supabase credentials — keep your real keys out of git
+config.js
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
