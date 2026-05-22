@@ -997,36 +997,35 @@ async function saveProfile() {
 }
 
 // ─── Bootstrap ────────────────────────────────────────────────────────────────
-async function init() {
-  setLoading(true);
-  try {
-    const { data: { session } } = await _sb.auth.getSession();
-    if (session) {
-      await loadData();
-      hideAuthPage();
-      render();
-    } else {
-      showAuthPage('login');
-    }
-  } catch(err) {
-    showAuthPage('login');
-  } finally {
-    setLoading(false);
-  }
-}
-
 document.addEventListener('DOMContentLoaded', () => {
-  // Listen for auth state changes (login / logout / token refresh)
+  // Show spinner immediately while we check session
+  setLoading(true);
+
   dbOnAuthChange(async (event, session) => {
-    if (event === 'SIGNED_IN' && session) {
-      setLoading(true);
-      await loadData();
-      setLoading(false);
-      hideAuthPage();
-      render();
+    // INITIAL_SESSION fires once on page load — session is null if not logged in
+    if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN') {
+      if (session) {
+        try {
+          setLoading(true);
+          await loadData();
+          hideAuthPage();
+          render();
+        } catch (err) {
+          console.error('Load error:', err);
+          toast('Failed to load data. Please refresh.', 'error');
+        } finally {
+          setLoading(false);
+        }
+      } else {
+        // No session on initial load — show login
+        setLoading(false);
+        showAuthPage('login');
+      }
     } else if (event === 'SIGNED_OUT') {
+      setLoading(false);
       showAuthPage('login');
+    } else if (event === 'TOKEN_REFRESHED') {
+      // Silent refresh — no UI change needed
     }
   });
-  init();
 });
